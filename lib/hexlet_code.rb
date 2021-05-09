@@ -1,5 +1,7 @@
-require "hexlet_code/version"
+# frozen_string_literal: true
+
+require 'hexlet_code/version'
 
 module HexletCode
-  # Your code goes here...
+  require 'hexlet_code/tag'
 end
