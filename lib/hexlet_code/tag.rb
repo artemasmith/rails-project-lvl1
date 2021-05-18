@@ -22,11 +22,13 @@ module HexletCode
 
       private
 
+      # rubocop:disable Style/StringConcatenation
       def parsed_attributes(attrs)
         return '' if attrs.empty?
 
         ' ' + attrs.sort.map { |k, v| "#{k}=\"#{v}\"" }.join(' ')
       end
+      # rubocop:enable Style/StringConcatenation
 
       def paired?(tag)
         PAIR_TAGS.include?(tag)

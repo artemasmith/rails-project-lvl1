@@ -3,7 +3,9 @@
 require 'spec_helper'
 
 RSpec.describe HexletCode do
-  it 'has a version number' do
-    expect(HexletCode::VERSION).not_to be nil
+  describe '#form_for' do
+    it 'should return empty form' do
+      expect(HexletCode.form_for).to eq('<form action="#" method="post"></form>')
+    end
   end
 end

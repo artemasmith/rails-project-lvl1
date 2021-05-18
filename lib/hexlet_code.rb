@@ -1,7 +1,10 @@
 # frozen_string_literal: true
 
-require 'hexlet_code/version'
+require_relative 'hexlet_code/version'
+require_relative 'hexlet_code/tag'
 
 module HexletCode
-  require 'hexlet_code/tag'
+  def self.form_for
+    Tag.build('form', action: '#', method: 'post')
+  end
 end
