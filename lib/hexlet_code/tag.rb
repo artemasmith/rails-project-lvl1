@@ -9,30 +9,74 @@ module HexletCode
                    canvas del ins caption col colgroup tfoot th form legend meter div].freeze
     UNPAIRED_TAGS = %w[input br hr meta img].freeze
     ALL_TAGS = PAIR_TAGS + UNPAIRED_TAGS
+
+    # EntryPoint
     class << self
-      def build(tag, attrs = {}, &block)
-        return unless ALL_TAGS.include?(tag)
+      def build(tag, obj = {}, &block)
+        new.build(tag, obj, &block)
+      end
+      
+      def form_for(obj = {}, &block)
+        new.form_for(obj, &block)
+      end
+    end
 
-        if paired?(tag)
-          "<#{tag}#{parsed_attributes(attrs)}>#{block.call if block_given?}</#{tag}>"
-        else
-          "<#{tag}#{parsed_attributes(attrs)}>"
-        end
+    def build(tag, obj = {}, &block)
+      @tag = tag
+      @obj = obj
+      return unless ALL_TAGS.include?(tag)
+
+      if paired?(tag)
+        "<#{tag}#{parsed_attributes(obj)}>#{yield(self) if block_given?}</#{tag}>"
+      else
+        "<#{tag}#{parsed_attributes(obj)}>"
+      end
+    end
+
+    def form_for(obj = {}, &block)
+      build('form', action: '#', method: 'post') do
+        @obj = obj
+        @accumulator = ""
+        result = ""
+        yield(self) if defined?(yield)
+        @accumulator
+      end
+    end
+
+    def input(name, as: nil)
+      prepend_tag = ''
+      append_tag = ''
+      if as
+        prepend_tag = convert_as_to_tag(as)
+        append_tag = "</#{convert_as_to_tag(as)}>"
+      else
+        prepend_tag = "input"
       end
 
-      private
+      value = " value=\"#{@obj.public_send(name)}\"" if (@obj && @obj.public_send(name))
 
-      # rubocop:disable Style/StringConcatenation
-      def parsed_attributes(attrs)
-        return '' if attrs.empty?
+      @accumulator += "<#{prepend_tag} name=\"#{name}\"#{value}>#{append_tag}"
+    end
 
-        ' ' + attrs.sort.map { |k, v| "#{k}=\"#{v}\"" }.join(' ')
+    private
+
+    def convert_as_to_tag(as)
+      case as
+      when :text
+        'textarea'
       end
-      # rubocop:enable Style/StringConcatenation
+    end
 
-      def paired?(tag)
-        PAIR_TAGS.include?(tag)
-      end
+    # rubocop:disable Style/StringConcatenation
+    def parsed_attributes(attrs)
+      return '' if attrs.empty?
+
+      ' ' + attrs.sort.map { |k, v| "#{k}=\"#{v}\"" }.join(' ')
+    end
+    # rubocop:enable Style/StringConcatenation
+
+    def paired?(tag)
+      PAIR_TAGS.include?(tag)
     end
   end
 end
