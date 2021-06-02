@@ -1,6 +1,7 @@
 
 AllCops:
   Exclude:
+    - spec/*
     - config.ru
     - config/*
     - config/*/*

@@ -15,15 +15,13 @@ module HexletCode
       def build(tag, obj = {}, &block)
         new.build(tag, obj, &block)
       end
-      
+
       def form_for(obj = {}, &block)
         new.form_for(obj, &block)
       end
     end
 
-    def build(tag, obj = {}, &block)
-      @tag = tag
-      @obj = obj
+    def build(tag, obj = {})
       return unless ALL_TAGS.include?(tag)
 
       if paired?(tag)
@@ -33,16 +31,16 @@ module HexletCode
       end
     end
 
-    def form_for(obj = {}, &block)
+    def form_for(obj = {})
       build('form', action: '#', method: 'post') do
         @obj = obj
-        @accumulator = ""
-        result = ""
+        @accumulator = "\n"
         yield(self) if defined?(yield)
         @accumulator
       end
     end
 
+    # rubocop:disable Naming/MethodParameterName, Metrics/MethodLength
     def input(name, as: nil)
       prepend_tag = ''
       append_tag = ''
@@ -50,18 +48,35 @@ module HexletCode
         prepend_tag = convert_as_to_tag(as)
         append_tag = "</#{convert_as_to_tag(as)}>"
       else
-        prepend_tag = "input"
+        prepend_tag = 'input'
       end
 
-      value = " value=\"#{@obj.public_send(name)}\"" if (@obj && @obj.public_send(name))
+      value = " value=\"#{@obj.public_send(name)}\"" if @obj && !@obj.public_send(name).nil?
+      @accumulator += "#{label(name)}\n"
+      @accumulator += "<#{prepend_tag} name=\"#{name}\"#{value}>#{append_tag}\n"
+    end
 
-      @accumulator += "<#{prepend_tag} name=\"#{name}\"#{value}>#{append_tag}"
+    # rubocop:enable Naming/MethodParameterName, Metrics/MethodLength
+    def label(for_tag)
+      build('label', for: for_tag.to_s) { for_tag.capitalize }
+    end
+
+    def submit(options = {})
+      options[:value] ||= 'Save'
+      options[:name] ||= 'commit'
+      @accumulator += "#{build('input', options.merge(type: 'submit').sort)}\n"
     end
 
     private
 
-    def convert_as_to_tag(as)
-      case as
+    def value_by_name(name)
+      return @obj[name] if @obj.is_a? Hash
+
+      @obj.public_send(name)
+    end
+
+    def convert_as_to_tag(sent_as)
+      case sent_as
       when :text
         'textarea'
       end
