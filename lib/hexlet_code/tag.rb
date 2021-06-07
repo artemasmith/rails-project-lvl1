@@ -16,8 +16,8 @@ module HexletCode
         new.build(tag, obj, &block)
       end
 
-      def form_for(obj = {}, &block)
-        new.form_for(obj, &block)
+      def form_for(obj = {}, **attrs, &block)
+        new.form_for(obj, **attrs, &block)
       end
     end
 
@@ -31,8 +31,10 @@ module HexletCode
       end
     end
 
-    def form_for(obj = {})
-      build('form', action: '#', method: 'post') do
+    def form_for(obj = {}, **attrs)
+      url = attrs[:url] || attrs['url'] || '#'
+      method = attrs[:method] || attrs['method'] || 'post'
+      build('form', action: url, method: method) do
         @obj = obj
         @accumulator = "\n"
         yield(self) if defined?(yield)
@@ -41,9 +43,10 @@ module HexletCode
     end
 
     # rubocop:disable Naming/MethodParameterName, Metrics/MethodLength
-    def input(name, as: nil)
+    def input(name, as: nil, **attrs)
       prepend_tag = ''
       append_tag = ''
+      additional = ''
       if as
         prepend_tag = convert_as_to_tag(as)
         append_tag = "</#{convert_as_to_tag(as)}>"
@@ -51,9 +54,13 @@ module HexletCode
         prepend_tag = 'input'
       end
 
+      if !attrs.nil? && attrs != {}
+        additional = " " + attrs.sort.map {|k,v| "#{k}=\"#{v}\"" }.join(" ")
+      end
+
       value = " value=\"#{@obj.public_send(name)}\"" if @obj && !@obj.public_send(name).nil?
       @accumulator += "#{label(name)}\n"
-      @accumulator += "<#{prepend_tag} name=\"#{name}\"#{value}>#{append_tag}\n"
+      @accumulator += "<#{prepend_tag} name=\"#{name}\"#{value}#{additional}>#{append_tag}\n"
     end
 
     # rubocop:enable Naming/MethodParameterName, Metrics/MethodLength
@@ -61,9 +68,10 @@ module HexletCode
       build('label', for: for_tag.to_s) { for_tag.capitalize }
     end
 
-    def submit(options = {})
-      options[:value] ||= 'Save'
-      options[:name] ||= 'commit'
+    def submit(value = '', **attrs)
+      options = {}
+      options[:value] ||= value|| 'Save'
+      options[:name] ||= attrs[:name] || attrs['name'] || 'commit'
       @accumulator += "#{build('input', options.merge(type: 'submit').sort)}\n"
     end
 
